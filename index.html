@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">
+<meta name="googlebot" content="noindex, nofollow">
+<title>NID 官網雲端架構</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --ground:#F2F5F3; --surface:#FFFFFF; --sunk:#E8EDEA;
+  --ink:#14201B; --muted:#56655E; --line:#C3CEC8; --line-soft:#DCE3DF;
+  --accent:#0B7A5A; --accent-soft:#DDF0E8;
+  --warn:#A85A00; --warn-soft:#FBEBD6;
+  --crit:#B42318;
+  --managed:#2E5B86; --managed-soft:#E3ECF5;
+  --font-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+  --font-display:"Barlow Condensed","Noto Sans TC","PingFang TC",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --ground:#0E1512; --surface:#15201B; --sunk:#1B2822;
+    --ink:#E3ECE7; --muted:#98A8A0; --line:#34453D; --line-soft:#26332D;
+    --accent:#3CC495; --accent-soft:#16372B;
+    --warn:#F0A24A; --warn-soft:#3A2A14;
+    --crit:#F2705F;
+    --managed:#86B2DD; --managed-soft:#1A2A3A;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1512; --surface:#15201B; --sunk:#1B2822;
+  --ink:#E3ECE7; --muted:#98A8A0; --line:#34453D; --line-soft:#26332D;
+  --accent:#3CC495; --accent-soft:#16372B;
+  --warn:#F0A24A; --warn-soft:#3A2A14;
+  --crit:#F2705F;
+  --managed:#86B2DD; --managed-soft:#1A2A3A;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.65;padding-inline:20px;padding-block:28px 64px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:44px}
+header{display:grid;gap:10px;max-width:74ch}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--font-display);font-weight:700;font-size:clamp(34px,5vw,52px);line-height:1.02;letter-spacing:.01em;margin:0;text-wrap:balance}
+h2{font-family:var(--font-display);font-weight:700;font-size:30px;line-height:1.1;margin:0;letter-spacing:.01em;text-wrap:balance}
+h3{font-size:16px;margin:0}
+p{margin:0}
+.lede{font-size:16.5px;color:var(--ink)}
+.lede b{color:var(--accent)}
+section{display:grid;gap:16px}
+.sec-head{display:grid;gap:6px;max-width:78ch}
+.sec-head p{color:var(--muted)}
+figure{margin:0;display:grid;gap:10px}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.diagram svg{display:block;width:100%;min-width:980px;height:auto;color:var(--ink)}
+figcaption{font-size:13.5px;color:var(--muted);max-width:90ch}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.sw{display:inline-block;width:26px;height:0;border-top:2px solid var(--accent)}
+.sw.dash{border-top:2px dashed var(--muted)}
+.sw.box{width:14px;height:14px;border:2px solid var(--accent);border-radius:3px;background:var(--accent-soft)}
+.sw.risk{width:14px;height:14px;border-radius:50%;background:var(--warn);border:none}
+
+/* SVG classes */
+.g-box{fill:none;stroke:var(--line);stroke-width:1.2}
+.g-edge{fill:var(--sunk);stroke:var(--line);stroke-width:1}
+.g-region{fill:none;stroke:var(--managed);stroke-width:1.3;stroke-dasharray:6 4}
+.g-run{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+.g-lbl{font:600 12px var(--font-body);fill:var(--muted);letter-spacing:.02em}
+.g-lbl-a{font:700 12px var(--font-body);fill:var(--accent)}
+.g-lbl-m{font:700 12px var(--font-body);fill:var(--managed)}
+.n{fill:var(--surface);stroke:var(--line);stroke-width:1.2}
+.n-run{fill:var(--surface);stroke:var(--accent);stroke-width:1.6}
+.n-data{fill:var(--surface);stroke:var(--managed);stroke-width:1.4}
+.n-opt{fill:var(--surface);stroke:var(--muted);stroke-width:1.2;stroke-dasharray:5 4}
+.n-risk{fill:var(--surface);stroke:var(--warn);stroke-width:1.6}
+.n-vm{fill:var(--sunk);stroke:var(--line);stroke-width:1.2}
+.chip{fill:var(--sunk);stroke:var(--line);stroke-width:1}
+.chip-opt{fill:var(--surface);stroke:var(--muted);stroke-width:1;stroke-dasharray:4 3}
+.pill{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.2}
+.t-tag{font:500 10.5px var(--font-mono);fill:var(--muted)}
+.t-name{font:700 13.5px var(--font-mono);fill:var(--ink)}
+.t-title{font:700 14px var(--font-body);fill:var(--ink)}
+.t-sub{font:400 11.5px var(--font-body);fill:var(--muted)}
+.t-risk{font:500 11.5px var(--font-body);fill:var(--warn)}
+.t-auto{font:700 12px var(--font-body);fill:var(--accent)}
+.t-edge{font:500 11px var(--font-body);fill:var(--muted)}
+.t-edge-a{font:600 11px var(--font-body);fill:var(--accent)}
+.e{fill:none;stroke:var(--muted);stroke-width:1.3}
+.e-a{fill:none;stroke:var(--accent);stroke-width:1.8}
+.e-d{fill:none;stroke:var(--muted);stroke-width:1.3;stroke-dasharray:5 4}
+.e-w{fill:none;stroke:var(--warn);stroke-width:1.5;stroke-dasharray:5 4}
+.e-bus{fill:none;stroke:var(--managed);stroke-width:2}
+.sq-on{fill:var(--accent)}
+.sq-off{fill:none;stroke:var(--accent);stroke-width:1;stroke-dasharray:2 1.5}
+.ah{fill:var(--muted)} .ah-a{fill:var(--accent)} .ah-m{fill:var(--managed)} .ah-w{fill:var(--warn)}
+.risk-dot{fill:var(--warn)} .risk-x{font:700 11px var(--font-body);fill:var(--surface)}
+
+/* scaling strip */
+.strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.stage{padding:18px 18px 20px;display:grid;gap:12px;align-content:start;border-left:1px solid var(--line-soft)}
+.stage:first-child{border-left:none}
+.stage .when{font-family:var(--font-mono);font-size:12px;color:var(--muted);letter-spacing:.04em}
+.stage h3{font-size:17px}
+.inst{display:grid;gap:6px}
+.inst-row{display:grid;grid-template-columns:78px 1fr;align-items:center;gap:8px;font-size:12.5px}
+.inst-row .who{font-family:var(--font-mono);font-size:12px;color:var(--muted)}
+.boxes{display:flex;flex-wrap:wrap;gap:3px}
+.boxes i{display:block;width:11px;height:11px;border-radius:2px;border:1.5px dashed var(--line)}
+.boxes i.on{background:var(--accent);border:1.5px solid var(--accent)}
+.boxes i.hot{background:var(--accent-soft);border:1.5px solid var(--accent)}
+.stage p{font-size:13.5px;color:var(--muted)}
+.stage.peak{background:var(--accent-soft)}
+
+/* tables */
+.tbl-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:none}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+td .svc{font-family:var(--font-mono);font-size:13px;font-weight:700}
+td.old{color:var(--muted)}
+tr.total td{font-weight:700;background:var(--sunk)}
+.map-arrow{color:var(--accent);font-weight:700}
+
+/* cost tiles */
+.costs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.cost{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:4px}
+.cost .k{font-size:13px;color:var(--muted)}
+.cost .v{font-family:var(--font-display);font-weight:700;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.cost .v small{font-size:18px;color:var(--muted);font-weight:600}
+.cost .d{font-size:13px;color:var(--muted)}
+.cost.pick{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
+.cost.pick .v{color:var(--accent)}
+
+/* owner summary */
+.summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.sum{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:grid;gap:10px;align-content:start}
+.sum h3{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.01em}
+.sum ul{margin:0;padding-left:1.1em;display:grid;gap:7px;font-size:14.5px}
+.sum.ask{border-color:var(--warn);background:var(--warn-soft)}
+.sum.ask h3{color:var(--warn)}
+.sum .big{font-family:var(--font-display);font-weight:700;font-size:34px;line-height:1;font-variant-numeric:tabular-nums}
+.sum .big small{font-size:16px;color:var(--muted);font-weight:600}
+.sum .row{display:flex;flex-wrap:wrap;gap:18px;align-items:baseline}
+.sum .row div{display:grid;gap:2px}
+.sum .lbl{font-size:12.5px;color:var(--muted)}
+@media (max-width:860px){.summary{grid-template-columns:1fr}}
+
+/* phases */
+.phases{display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.ph{display:grid;grid-template-columns:120px 1fr;gap:18px;padding:16px 18px;border-top:1px solid var(--line-soft)}
+.ph:first-child{border-top:none}
+.ph .tag{font-family:var(--font-display);font-weight:700;font-size:26px;line-height:1;color:var(--accent)}
+.ph .tag small{display:block;font-family:var(--font-body);font-size:12px;font-weight:500;color:var(--muted);margin-top:6px}
+.ph h3{margin-bottom:4px}
+.ph p{font-size:14px;color:var(--muted)}
+.ph p b{color:var(--ink);font-weight:500}
+
+/* gates & lists */
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;display:grid;gap:10px;align-content:start}
+.panel.gate{border-color:var(--warn)}
+.panel h3{display:flex;align-items:center;gap:8px}
+.badge{display:inline-block;font:600 11px var(--font-mono);letter-spacing:.05em;padding:2px 8px;border-radius:999px;background:var(--warn-soft);color:var(--warn)}
+.badge.ok{background:var(--accent-soft);color:var(--accent)}
+ul.tight{margin:0;padding-left:1.1em;display:grid;gap:8px;font-size:14px}
+ul.tight li::marker{color:var(--muted)}
+ul.tight b{font-weight:600}
+.alts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.alt{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:8px;align-content:start}
+.alt .nm{font-family:var(--font-mono);font-size:13px;font-weight:700}
+.alt .vd{font-size:13px;font-weight:600}
+.alt .vd.no{color:var(--warn)} .alt .vd.yes{color:var(--accent)}
+.alt p{font-size:13.5px;color:var(--muted)}
+.foot{font-size:12.5px;color:var(--muted);display:grid;gap:4px;border-top:1px solid var(--line);padding-top:16px}
+code{font-family:var(--font-mono);font-size:.9em;background:var(--sunk);padding:1px 5px;border-radius:4px}
+
+@media (max-width:860px){
+  .strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stage:nth-child(3){border-left:none}
+  .stage:nth-child(n+3){border-top:1px solid var(--line-soft)}
+  .costs,.alts{grid-template-columns:1fr}
+  .two{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  body{padding-inline:16px}
+  .strip{grid-template-columns:1fr}
+  .stage{border-left:none;border-top:1px solid var(--line-soft)}
+  .stage:first-child{border-top:none}
+  .ph{grid-template-columns:1fr;gap:6px}
+}
+details.techbox{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+details.techbox[open]{display:grid;gap:28px}
+details.techbox summary{cursor:pointer;font-weight:600;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<style>
+.wrap{gap:36px}
+.key.wide{grid-column:1/-1}
+.keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.key{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:8px;align-content:start}
+.key h3{font-family:var(--font-display);font-size:21px;font-weight:700}
+.key ul{margin:0;padding-left:1.1em;display:grid;gap:6px;font-size:14.5px}
+.key .big{font-family:var(--font-display);font-weight:700;font-size:30px;line-height:1.1;font-variant-numeric:tabular-nums}
+.key .big .arrow{color:var(--muted);font-size:22px;padding:0 6px}
+.key .big .new{color:var(--accent)}
+.steps{display:grid;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.step{display:grid;grid-template-columns:40px 1fr;gap:14px;padding:12px 16px;border-top:1px solid var(--line-soft);font-size:14.5px}
+.step:first-child{border-top:none}
+.step b{font-family:var(--font-display);font-size:20px;color:var(--accent);font-weight:700}
+.step small{display:block;color:var(--muted);font-size:12px}
+@media (max-width:760px){.keys{grid-template-columns:1fr}}
+@media (max-width:520px){.step{grid-template-columns:1fr;gap:4px}}
+</style>
+<div class="wrap">
+
+<header>
+  <div class="eyebrow">nidstudio.online · 2026-09-24</div>
+  <h1>NID 官網雲端架構</h1>
+  <p class="lede">把現在「一台主機包辦全部」，改成<b>人多自動加開、人少自動收回</b>、由 Google 代管的架構。網址、付款和登入方式都不變。</p>
+</header>
+
+<section id="keys">
+  <div class="keys">
+    <div class="key">
+      <h3>現在的問題（實際查到的）</h3>
+      <ul>
+        <li><b>全部擠在一台小主機</b>：網站、資料庫、排程都在同一台。它一壞，網站、報名、付款全部停。</li>
+        <li><b>開賣撐不住</b>：約 50–100 人同時瀏覽就滿，不能臨時加機器。</li>
+        <li><b>開賣時會員登不進去</b>：全站所有人合計每分鐘只能登入 10 次。</li>
+        <li><b>資料可能遺失</b>：只有每天一次整台備份，出事最多少一天的資料。</li>
+        <li><b>壞了沒人知道</b>：沒有任何監控或通知。</li>
+        <li><b>資安疑慮</b>：正式網站的金鑰也放在前廠商的機器上；後台還有前廠商員工的最高權限帳號。</li>
+        <li><b>更新沒有把關</b>：改好就直接上正式網站，沒有先測試；測試環境在前廠商那邊，NID 用不到。</li>
+      </ul>
+    </div>
+    <div class="key">
+      <h3>改完之後</h3>
+      <ul>
+        <li><b>活動時才加大，平常省錢</b>：網站主機人多自動加開、人少自動收回，不用人處理；大型促銷前一晚把資料庫升級（停約 5 分鐘），活動後降回，只多付那幾天（每天約 NT$25）。</li>
+        <li><b>先測試再上線</b>：NID 有自己的測試環境，試過才上正式網站；出問題可以馬上退回上一版，不用停站。</li>
+        <li><b>資料有保障</b>：資料庫交給 Google 管，每天備份，可以還原到 7 天內任何時間點。</li>
+        <li><b>出問題會通知</b>負責人，不用等客人反應。</li>
+        <li><b>不用自己顧主機</b>：主機、系統更新、網站憑證都交給 Google。</li>
+      </ul>
+    </div>
+    <div class="key wide">
+      <h3>每月費用（正式網站）</h3>
+      <div class="big">NT$1,500<span class="arrow">→</span><span class="new">NT$2,900</span></div>
+      <ul>
+        <li>另外新增一套 NID 自己的測試環境，約 NT$1,200。現在的 NT$1,500 不含測試環境（原本的測試環境在前廠商自己的機器上）。</li>
+        <li>正式＋測試合計約 NT$4,100。</li>
+        <li>平常用小規格就夠。大型促銷前可以先升級資料庫，活動後再降回，只多付那幾天（每天約 NT$25）。</li>
+        <li>另有一次性支出（不在月費裡）：搬遷的人力；以及切換後舊主機會先留 1–2 個月當備援，這段期間新舊一起付，多出約 NT$1,250–2,500，關掉舊主機後就沒有了。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="compare">
+  <div class="sec-head">
+    <h2>現在 vs 新架構</h2>
+    <p>左邊是現在的正式網站，右邊是新架構。</p>
+  </div>
+  <figure>
+    <div class="diagram">
+<svg viewBox="0 0 1200 560" role="img" aria-label="左：現在所有東西擠在一台主機，一壞全停、不能加機器、每天只備份一次、沒有監控。右：新架構由網站入口分流到前台、API、後台三組可自動加開的主機，資料庫與照片交給 Google 代管並每天備份，另有排程、出錯通知與一模一樣的測試環境。">
+  <defs>
+    <marker id="cmpAh" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="cmpAhA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+  </defs>
+
+  <!-- ===== 左：現在 ===== -->
+  <text x="40" y="40" class="t-title" style="font-size:17px">現在：一台主機包辦全部</text>
+  <rect x="180" y="60" width="200" height="40" rx="8" class="n"/>
+  <text x="280" y="85" text-anchor="middle" class="t-title">會員、員工、藍新</text>
+  <path d="M280 100 V132" class="e" marker-end="url(#cmpAh)"/>
+
+  <rect x="50" y="138" width="460" height="232" rx="12" class="n-vm"/>
+  <text x="70" y="164" class="t-title">一台主機（2 顆共用 CPU、4GB 記憶體）</text>
+  <rect x="70"  y="182" width="130" height="42" rx="6" class="chip"/><text x="135" y="208" text-anchor="middle" class="t-title">前台網站</text>
+  <rect x="215" y="182" width="130" height="42" rx="6" class="chip"/><text x="280" y="208" text-anchor="middle" class="t-title">API</text>
+  <rect x="360" y="182" width="130" height="42" rx="6" class="chip"/><text x="425" y="208" text-anchor="middle" class="t-title">後台</text>
+  <rect x="70"  y="236" width="130" height="42" rx="6" class="chip"/><text x="135" y="262" text-anchor="middle" class="t-title">資料庫</text>
+  <rect x="215" y="236" width="130" height="42" rx="6" class="chip"/><text x="280" y="262" text-anchor="middle" class="t-title">排程</text>
+  <rect x="360" y="236" width="130" height="42" rx="6" class="chip"/><text x="425" y="262" text-anchor="middle" class="t-title">背景程式</text>
+  <circle cx="80" cy="310" r="7" class="risk-dot"/><text x="80" y="314" text-anchor="middle" class="risk-x">!</text>
+  <text x="96" y="315" class="t-risk">一台壞了，網站、報名、付款全部停</text>
+  <circle cx="80" cy="344" r="7" class="risk-dot"/><text x="80" y="348" text-anchor="middle" class="risk-x">!</text>
+  <text x="96" y="349" class="t-risk">人多時不能加機器，約 50–100 人就滿</text>
+
+  <rect x="50" y="390" width="220" height="56" rx="8" class="n-risk"/>
+  <text x="160" y="414" text-anchor="middle" class="t-title">每天一次整台備份</text>
+  <text x="160" y="433" text-anchor="middle" class="t-sub">出事最多少一天的資料</text>
+  <rect x="290" y="390" width="220" height="56" rx="8" class="n-risk"/>
+  <text x="400" y="414" text-anchor="middle" class="t-title">沒有監控、沒有通知</text>
+  <text x="400" y="433" text-anchor="middle" class="t-sub">壞了要等客人反應</text>
+  <rect x="50" y="466" width="460" height="56" rx="8" class="n-risk"/>
+  <text x="280" y="490" text-anchor="middle" class="t-title">測試環境在前廠商自己的機器上</text>
+  <text x="280" y="509" text-anchor="middle" class="t-sub">改好就直接上正式網站，NID 沒有地方先試</text>
+
+  <line x1="600" y1="24" x2="600" y2="536" class="e-d"/>
+
+  <!-- ===== 右：新架構 ===== -->
+  <text x="640" y="40" class="t-title" style="font-size:17px">新架構：分開放、人多自動加開</text>
+  <rect x="800" y="60" width="200" height="40" rx="8" class="n"/>
+  <text x="900" y="85" text-anchor="middle" class="t-title">會員、員工、藍新</text>
+  <path d="M900 100 V124" class="e" marker-end="url(#cmpAh)"/>
+  <rect x="660" y="128" width="480" height="44" rx="8" class="n"/>
+  <text x="900" y="155" text-anchor="middle" class="t-title">網站入口：處理 https、依網址分流</text>
+  <path d="M736 172 V196" class="e-a" marker-end="url(#cmpAhA)"/>
+  <path d="M900 172 V196" class="e-a" marker-end="url(#cmpAhA)"/>
+  <path d="M1064 172 V196" class="e-a" marker-end="url(#cmpAhA)"/>
+
+  <rect x="660" y="200" width="152" height="96" rx="8" class="n-run"/>
+  <text x="736" y="226" text-anchor="middle" class="t-title">前台網站</text>
+  <text x="736" y="248" text-anchor="middle" class="t-auto">1 ↔ 12 台</text>
+  <g transform="translate(703 262)"><rect width="10" height="10" rx="2" class="sq-on"/><rect x="14" width="10" height="10" rx="2" class="sq-on"/><rect x="28" width="10" height="10" rx="2" class="sq-off"/><rect x="42" width="10" height="10" rx="2" class="sq-off"/><rect x="56" width="10" height="10" rx="2" class="sq-off"/></g>
+  <rect x="824" y="200" width="152" height="96" rx="8" class="n-run"/>
+  <text x="900" y="226" text-anchor="middle" class="t-title">API</text>
+  <text x="900" y="248" text-anchor="middle" class="t-auto">1 ↔ 6 台</text>
+  <g transform="translate(867 262)"><rect width="10" height="10" rx="2" class="sq-on"/><rect x="14" width="10" height="10" rx="2" class="sq-off"/><rect x="28" width="10" height="10" rx="2" class="sq-off"/><rect x="42" width="10" height="10" rx="2" class="sq-off"/><rect x="56" width="10" height="10" rx="2" class="sq-off"/></g>
+  <rect x="988" y="200" width="152" height="96" rx="8" class="n-run"/>
+  <text x="1064" y="226" text-anchor="middle" class="t-title">後台</text>
+  <text x="1064" y="248" text-anchor="middle" class="t-auto">0 ↔ 2 台</text>
+  <g transform="translate(1045 262)"><rect width="10" height="10" rx="2" class="sq-off"/><rect x="14" width="10" height="10" rx="2" class="sq-off"/><rect x="28" width="10" height="10" rx="2" class="sq-off"/></g>
+
+  <path d="M736 296 V320 M900 296 V320 M1064 296 V320" class="e"/>
+  <path d="M736 320 H1064" class="e-bus"/>
+  <path d="M776 320 V338" class="e" marker-end="url(#cmpAh)"/>
+  <path d="M1024 320 V338" class="e" marker-end="url(#cmpAh)"/>
+  <rect x="660" y="342" width="232" height="56" rx="8" class="n-data"/>
+  <text x="776" y="366" text-anchor="middle" class="t-title">資料庫（Google 代管）</text>
+  <text x="776" y="385" text-anchor="middle" class="t-sub">每天備份，7 天內任一時間點可還原</text>
+  <rect x="908" y="342" width="232" height="56" rx="8" class="n-data"/>
+  <text x="1024" y="366" text-anchor="middle" class="t-title">照片與圖片</text>
+  <text x="1024" y="385" text-anchor="middle" class="t-sub">放在 Google 儲存空間，各主機共用</text>
+
+  <rect x="660" y="410" width="232" height="50" rx="8" class="n"/>
+  <text x="776" y="431" text-anchor="middle" class="t-title">排程工作</text>
+  <text x="776" y="449" text-anchor="middle" class="t-sub">照時間自動執行，跑完就關</text>
+  <rect x="908" y="410" width="232" height="50" rx="8" class="n"/>
+  <text x="1024" y="431" text-anchor="middle" class="t-title">出錯通知</text>
+  <text x="1024" y="449" text-anchor="middle" class="t-sub">網站有問題，負責人馬上知道</text>
+  <rect x="660" y="472" width="480" height="50" rx="8" class="n-run"/>
+  <text x="900" y="493" text-anchor="middle" class="t-title">NID 自己的測試環境（和正式一模一樣的縮小版）</text>
+  <text x="900" y="511" text-anchor="middle" class="t-sub">先在這裡試，沒問題才上正式網站；出問題可以一鍵退回上一版</text>
+</svg>
+    </div>
+    <figcaption>綠色是會自動加開、收回的部分；實心方塊是平常開著的台數，虛線方塊是人多時才加開的。</figcaption>
+  </figure>
+</section>
+
+
+
+<section id="load">
+  <div class="sec-head">
+    <h2>壓力測試：撐得住多少人</h2>
+    <p>在測試環境模擬很多人同時逛網站（看首頁、課程、課程內容），一路加人數，看到哪裡會變慢（2026-09-24 實測）。現在的正式主機不能拿來測，會影響客人，所以用測出來的數據推算。</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th></th><th class="num">現在的主機</th><th class="num">新架構（資料庫小規格）</th><th class="num">新架構（活動期間升級資料庫）</th></tr></thead>
+      <tbody>
+        <tr><td>每秒能順暢處理的頁數</td><td class="num">約 3–7 頁（推算）</td><td class="num">約 15 頁</td><td class="num">約 35 頁</td></tr>
+        <tr><td>大約同時瀏覽的人數</td><td class="num">約 50–100 人</td><td class="num">約 200–250 人</td><td class="num">約 500 人</td></tr>
+        <tr><td>這時候每頁要等多久</td><td class="num">—</td><td class="num">0.2–0.5 秒</td><td class="num">0.3–0.4 秒</td></tr>
+        <tr><td>人再多的時候</td><td class="num">不能加開，只能等</td><td class="num">變慢到 6–7 秒</td><td class="num">變慢到 2.5–4 秒，沒有出錯</td></tr>
+        <tr><td>費用（正式網站）</td><td class="num">每月 NT$1,500</td><td class="num">每月約 NT$2,900</td><td class="num">活動期間每天約多 NT$25</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="tight" style="max-width:90ch">
+    <li><b>平常的流量兩邊都夠</b>：正式網站每天約 2,000–16,000 次頁面請求；近兩週最忙的一分鐘約 450 次，大多是單一自動程式在抓資料。差別在開賣的時候。</li>
+    <li><b>要撐更多人，關鍵是資料庫</b>：網站主機從 2 台加到 12 台，速度完全沒變；資料庫升級後就能撐到約 500 人。</li>
+    <li><b>只在大型促銷前升級</b>：升級、降級各約 5 分鐘（半夜做），活動結束再降回，多付的只有那幾天，每天約 NT$25。平常不用升級。</li>
+    <li>人數是以「每人每 10–20 秒換一頁」估算；開賣時大家一直重新整理，實際能撐的人會少一些。</li>
+  </ul>
+</section>
+
+<section id="cost">
+  <div class="sec-head">
+    <h2>費用明細</h2>
+    <p>依 Google 官方定價估算，1 美元約 31.7 元，實際以帳單為準。</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>項目</th><th class="num">每月</th><th>說明</th></tr></thead>
+      <tbody>
+        <tr><td colspan="3"><b>正式網站</b></td></tr>
+        <tr><td>資料庫</td><td class="num">US$28</td><td>Google 代管的 MySQL，先用小規格，含每天備份</td></tr>
+        <tr><td>網站主機</td><td class="num">US$30</td><td>前台與 api 各留 1 台待命，人多時自動加開；只在有請求時計費</td></tr>
+        <tr><td>網站入口</td><td class="num">US$18</td><td>依網址分流、處理 https</td></tr>
+        <tr><td>排程工作</td><td class="num">US$7</td><td>15 支排程照時間各跑一次，每次約 15 秒、跑完就關（測試環境實測）</td></tr>
+        <tr><td>流量與其他</td><td class="num">US$9</td><td>對外流量、檔案儲存、密碼保管等</td></tr>
+        <tr class="total"><td>正式網站小計</td><td class="num">US$92</td><td>約 NT$2,900；現在約 US$46（NT$1,500）</td></tr>
+        <tr><td colspan="3"><b>新增項目（現在沒有）</b></td></tr>
+        <tr><td>測試環境</td><td class="num">US$38</td><td>約 NT$1,200。和正式一樣的架構，用最小規格（含排程約 US$7）</td></tr>
+        <tr><td>上線流程（GitHub）</td><td class="num">US$0</td><td>用免費版</td></tr>
+        <tr class="total"><td>合計</td><td class="num">US$130</td><td>約 NT$4,100</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <ul class="tight" style="max-width:90ch">
+    <li><b>可能增加：</b>大型促銷期間升級資料庫，每天約 +NT$25；人多時自動加開的主機，每台每小時約 NT$3，只在加開時計費；遇到攻擊要開防護，每月約 +US$8。</li>
+    <li><b>可以更省：</b>測試環境不用時休眠，每月約可再省 NT$830；穩定後承諾用一年，主機費用約可再省 17%。</li>
+    <li>以目前的流量，一台主機其實撐得住。多花的錢，買的是自動加開、更新不停站、可以退回，以及可靠的備份和通知。</li>
+  </ul>
+</section>
+
+<section id="steps">
+  <div class="sec-head">
+    <h2>怎麼搬</h2>
+    <p>每一步都能退回原狀，舊主機會留到新架構穩定之後。</p>
+  </div>
+  <div class="steps">
+    <div class="step"><div><b>1</b></div><div>拿回程式碼，補好安全漏洞（換掉外流的金鑰、停用前廠商帳號），加上備份和出錯通知。</div></div>
+    <div class="step"><div><b>2</b></div><div>調整程式、建好測試環境和上線流程，模擬開賣人潮做壓力測試，定出最終規格。</div></div>
+    <div class="step"><div><b>3</b></div><div>凌晨搬資料庫和會員照片，停約 5–10 分鐘。</div></div>
+    <div class="step"><div><b>4</b></div><div>網站入口換成新的，網址不變。</div></div>
+    <div class="step"><div><b>5</b></div><div>三個網站逐一切過去，確認穩定後關掉舊主機。</div></div>
+  </div>
+</section>
+
+<section id="todo">
+  <div class="panel gate" style="max-width:90ch">
+    <h3><span class="badge">還在確認</span></h3>
+    <ul class="tight">
+      <li><b>程式碼移交</b>：前廠商要把程式轉到 NID 自己的 GitHub。</li>
+      <li><b>測試用帳號</b>：藍新已拿到；Strava、LINE 還要建。前台目前沒有 LINE 登入按鈕，先確認要不要用。</li>
+      <li><b>大型促銷的人數</b>：有促銷、預期很多人同時上線的活動，請營運端事先估計人數，用來判斷要不要提前升級資料庫。</li>
+      <li><b>出錯通知</b>：還沒建好，正式上線前會加上。</li>
+      <li><b>實際費用</b>：上面是依 Google 定價估算，第一個月帳單出來才確定。</li>
+    </ul>
+  </div>
+</section>
+
+<details class="techbox">
+  <summary>技術細節（給工程人員）：完整架構圖、上線流程</summary>
+<section id="target" class="tech">
+  <div class="sec-head">
+    <h2>新架構</h2>
+    <p>綠色是會自動加開、收回的部分。使用者連進來，先經過一個入口依網址分流，再到各自的網站；所有網站共用同一份資料。</p>
+  </div>
+  <figure>
+    <div class="diagram">
+<svg viewBox="0 0 1200 930" role="img" aria-label="目標架構：Global external Application Load Balancer 依網域把流量分給三個會自動擴縮的 Cloud Run 服務，所有服務共用 Cloud SQL、Cloud Storage、Secret Manager；每站的排程由 Cloud Scheduler 觸發、各只跑一份；部署由 GitHub Actions 依 tag 進行，映像放在 Artifact Registry。">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="ahA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+    <marker id="ahM" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-m"/></marker>
+  </defs>
+
+  <!-- Row A: Internet -->
+  <rect x="16" y="20" width="900" height="112" rx="10" class="g-box"/>
+  <text x="28" y="40" class="g-lbl">網際網路</text>
+  <rect x="36" y="50" width="160" height="62" rx="8" class="n"/>
+  <text x="50" y="76" class="t-title">會員瀏覽器</text>
+  <text x="50" y="96" class="t-sub">約 922 位付費學員</text>
+  <rect x="208" y="50" width="160" height="62" rx="8" class="n"/>
+  <text x="222" y="76" class="t-title">第三方回呼</text>
+  <text x="222" y="96" class="t-sub">藍新 · Strava webhook</text>
+  <rect x="380" y="50" width="160" height="62" rx="8" class="n"/>
+  <text x="394" y="76" class="t-title">員工瀏覽器</text>
+  <text x="394" y="96" class="t-sub">後台管理</text>
+  <rect x="740" y="50" width="160" height="62" rx="8" class="n"/>
+  <text x="754" y="76" class="t-title">DNS</text>
+  <text x="754" y="96" class="t-sub">仍在 Wix · 只改 A 記錄</text>
+
+  <!-- GCP project -->
+  <rect x="16" y="148" width="900" height="768" rx="12" class="g-box"/>
+  <text x="560" y="166" class="g-lbl">Google Cloud 專案 nid-studio</text>
+
+  <!-- Edge band -->
+  <rect x="28" y="176" width="696" height="166" rx="10" class="g-edge"/>
+  <text x="712" y="193" text-anchor="end" class="g-lbl">全球邊緣 · Global</text>
+  <rect x="36" y="200" width="676" height="134" rx="9" class="n"/>
+  <text x="52" y="222" class="t-name">Global external Application Load Balancer</text>
+  <text x="696" y="222" text-anchor="end" class="t-sub">單一 anycast IP · HTTP/2 · HTTP/3</text>
+  <rect x="52" y="232" width="152" height="40" rx="6" class="chip"/>
+  <text x="62" y="249" class="t-name" style="font-size:11.5px">Certificate Manager</text>
+  <text x="62" y="264" class="t-sub" style="font-size:10.5px">TLS 憑證自動續約</text>
+  <rect x="214" y="232" width="152" height="40" rx="6" class="chip-opt"/>
+  <text x="224" y="249" class="t-name" style="font-size:11.5px">Cloud Armor</text>
+  <text x="224" y="264" class="t-sub" style="font-size:10.5px">政策先寫好，被攻擊時才掛上</text>
+  <rect x="376" y="232" width="152" height="40" rx="6" class="chip"/>
+  <text x="386" y="249" class="t-name" style="font-size:11.5px">Cloud CDN</text>
+  <text x="386" y="264" class="t-sub" style="font-size:10.5px">只快取 /build/* 靜態檔</text>
+  <rect x="538" y="232" width="152" height="40" rx="6" class="chip"/>
+  <text x="548" y="249" class="t-name" style="font-size:11.5px">IAP</text>
+  <text x="548" y="264" class="t-sub" style="font-size:10.5px">後台只放行員工帳號</text>
+  <rect x="41" y="284" width="150" height="36" rx="18" class="pill"/>
+  <text x="116" y="307" text-anchor="middle" class="t-edge-a">www · 根網域</text>
+  <rect x="213" y="284" width="150" height="36" rx="18" class="pill"/>
+  <text x="288" y="307" text-anchor="middle" class="t-edge-a">api.*</text>
+  <rect x="385" y="284" width="150" height="36" rx="18" class="pill"/>
+  <text x="460" y="307" text-anchor="middle" class="t-edge-a">backend.* → IAP</text>
+
+  <!-- inbound -->
+  <path d="M116 112 V198" class="e-a" marker-end="url(#ahA)"/>
+  <text x="122" y="160" class="t-edge-a">HTTPS</text>
+  <path d="M288 112 V198" class="e-a" marker-end="url(#ahA)"/>
+  <text x="294" y="160" class="t-edge-a">POST 回呼</text>
+  <path d="M460 112 V198" class="e-a" marker-end="url(#ahA)"/>
+  <text x="466" y="160" class="t-edge-a">HTTPS</text>
+  <path d="M820 112 V262 H714" class="e-d" marker-end="url(#ahM)"/>
+  <text x="828" y="200" class="t-edge">A 記錄</text>
+  <text x="828" y="215" class="t-edge">→ LB IP</text>
+
+  <!-- Region -->
+  <rect x="20" y="354" width="892" height="376" rx="10" class="g-region"/>
+  <text x="900" y="371" text-anchor="end" class="g-lbl-m">asia-east1（台灣）</text>
+
+  <!-- Cloud Run group -->
+  <rect x="28" y="380" width="696" height="156" rx="10" class="g-run"/>
+  <text x="630" y="396" text-anchor="middle" class="g-lbl-a">Cloud Run · 依流量自動增減</text>
+
+  <!-- LB → Cloud Run -->
+  <path d="M116 320 V410" class="e-a" marker-end="url(#ahA)"/>
+  <path d="M288 320 V410" class="e-a" marker-end="url(#ahA)"/>
+  <path d="M460 320 V410" class="e-a" marker-end="url(#ahA)"/>
+  <text x="122" y="350" class="t-edge-a">serverless NEG</text>
+  <text x="294" y="350" class="t-edge-a">serverless NEG</text>
+  <text x="466" y="350" class="t-edge-a">驗證後</text>
+
+  <!-- www -->
+  <rect x="36" y="412" width="160" height="112" rx="8" class="n-run"/>
+  <text x="48" y="430" class="t-tag">Cloud Run</text>
+  <text x="48" y="449" class="t-name">nid-www</text>
+  <text x="48" y="467" class="t-sub">前台 · 1 vCPU / 1 GB</text>
+  <text x="48" y="487" class="t-auto">1 ↔ 12 台</text>
+  <g transform="translate(48 497)">
+    <rect x="0" width="8" height="8" rx="1.5" class="sq-on"/><rect x="11" width="8" height="8" rx="1.5" class="sq-off"/><rect x="22" width="8" height="8" rx="1.5" class="sq-off"/><rect x="33" width="8" height="8" rx="1.5" class="sq-off"/><rect x="44" width="8" height="8" rx="1.5" class="sq-off"/><rect x="55" width="8" height="8" rx="1.5" class="sq-off"/><rect x="66" width="8" height="8" rx="1.5" class="sq-off"/><rect x="77" width="8" height="8" rx="1.5" class="sq-off"/><rect x="88" width="8" height="8" rx="1.5" class="sq-off"/><rect x="99" width="8" height="8" rx="1.5" class="sq-off"/><rect x="110" width="8" height="8" rx="1.5" class="sq-off"/><rect x="121" width="8" height="8" rx="1.5" class="sq-off"/>
+  </g>
+  <!-- api -->
+  <rect x="208" y="412" width="160" height="112" rx="8" class="n-run"/>
+  <text x="220" y="430" class="t-tag">Cloud Run</text>
+  <text x="220" y="449" class="t-name">nid-api</text>
+  <text x="220" y="467" class="t-sub">Strava · 藍新回呼</text>
+  <text x="220" y="487" class="t-auto">1 ↔ 6 台 · 常駐 1 台</text>
+  <g transform="translate(220 497)">
+    <rect x="0" width="8" height="8" rx="1.5" class="sq-on"/><rect x="11" width="8" height="8" rx="1.5" class="sq-off"/><rect x="22" width="8" height="8" rx="1.5" class="sq-off"/><rect x="33" width="8" height="8" rx="1.5" class="sq-off"/><rect x="44" width="8" height="8" rx="1.5" class="sq-off"/><rect x="55" width="8" height="8" rx="1.5" class="sq-off"/>
+  </g>
+  <!-- backend -->
+  <rect x="380" y="412" width="160" height="112" rx="8" class="n-run"/>
+  <text x="392" y="430" class="t-tag">Cloud Run</text>
+  <text x="392" y="449" class="t-name">nid-backend</text>
+  <text x="392" y="467" class="t-sub">員工後台</text>
+  <text x="392" y="487" class="t-auto">0 ↔ 2 台</text>
+  <g transform="translate(392 497)">
+    <rect x="0" width="8" height="8" rx="1.5" class="sq-off"/><rect x="11" width="8" height="8" rx="1.5" class="sq-off"/>
+  </g>
+  <!-- ops -->
+  <rect x="552" y="412" width="160" height="112" rx="8" class="n-run"/>
+  <text x="564" y="430" class="t-tag">Cloud Run jobs · 不對外</text>
+  <text x="564" y="449" class="t-name">排程工作</text>
+  <text x="564" y="467" class="t-sub">15 支（含佇列），照時間執行</text>
+  <text x="564" y="487" class="t-auto">跑完就關，不常駐</text>
+  <g transform="translate(564 497)">
+    <rect x="0" width="8" height="8" rx="1.5" class="sq-off"/><rect x="11" width="8" height="8" rx="1.5" class="sq-off"/>
+  </g>
+
+  <!-- Scheduler -->
+  <rect x="764" y="412" width="140" height="64" rx="8" class="n"/>
+  <text x="776" y="433" class="t-name" style="font-size:12.5px">Cloud Scheduler</text>
+  <text x="776" y="451" class="t-sub" style="font-size:10.5px">依時間觸發各排程</text>
+  <text x="776" y="466" class="t-sub" style="font-size:10.5px">每週匯出資料庫</text>
+  <path d="M764 444 H716" class="e-d" marker-end="url(#ah)"/>
+  <text x="740" y="438" text-anchor="middle" class="t-edge">觸發</text>
+
+  <!-- outbound bus -->
+  <path d="M724 494 H926" class="e" marker-end="url(#ah)"/>
+  <text x="800" y="488" class="t-edge">對外 HTTPS</text>
+
+  <!-- NAT optional -->
+  <rect x="764" y="540" width="140" height="48" rx="8" class="n-opt"/>
+  <text x="776" y="560" class="t-name" style="font-size:12px">Cloud NAT</text>
+  <text x="776" y="577" class="t-sub" style="font-size:10.5px">藍新要綁 IP 才建</text>
+  <path d="M712 514 H740 V564 H762" class="e-d" marker-end="url(#ah)"/>
+  <path d="M904 564 H918 V616 H942" class="e-d" marker-end="url(#ah)"/>
+
+  <!-- Memorystore optional -->
+  <rect x="764" y="606" width="140" height="56" rx="8" class="n-opt"/>
+  <text x="776" y="628" class="t-name" style="font-size:12px">Memorystore</text>
+  <text x="776" y="646" class="t-sub" style="font-size:10.5px">資料庫吃緊時才加</text>
+
+  <!-- shared-state bus -->
+  <path d="M116 524 V552 M288 524 V552 M460 524 V552 M632 524 V552" class="e-bus"/>
+  <path d="M116 552 H632" class="e-bus"/>
+  <path d="M202 552 V570" class="e-bus" marker-end="url(#ahM)"/>
+  <path d="M460 552 V570" class="e-bus" marker-end="url(#ahM)"/>
+  <path d="M632 570 V554" class="e-bus" marker-end="url(#ahM)"/>
+  <text x="214" y="566" class="t-edge" style="fill:var(--managed)">每一台都讀寫同一份狀態</text>
+
+  <!-- data -->
+  <rect x="36" y="572" width="332" height="128" rx="8" class="n-data"/>
+  <text x="50" y="592" class="t-tag">Cloud SQL</text>
+  <text x="50" y="612" class="t-name">MySQL 8.4 · Enterprise</text>
+  <text x="50" y="634" class="t-sub">業務資料 ＋ session／cache／佇列表</text>
+  <text x="50" y="653" class="t-sub">小規格 · 10 GB SSD · 每日備份 ＋ 7 天還原</text>
+  <text x="50" y="672" class="t-sub">各服務經 Cloud Run 內建連線連入</text>
+
+  <rect x="380" y="572" width="160" height="128" rx="8" class="n-data"/>
+  <text x="392" y="592" class="t-tag">Cloud Storage</text>
+  <text x="392" y="612" class="t-title" style="font-size:13px">會員照片、後台圖片</text>
+  <text x="392" y="630" class="t-sub">私有，掛成資料夾使用</text>
+  <text x="392" y="656" class="t-title" style="font-size:13px">Vite 靜態檔</text>
+  <text x="392" y="674" class="t-sub">由 Cloud CDN 對外</text>
+
+  <rect x="552" y="572" width="160" height="128" rx="8" class="n-data"/>
+  <text x="564" y="592" class="t-tag">Secret Manager</text>
+  <text x="564" y="612" class="t-title" style="font-size:13px">.env · APP_KEY</text>
+  <text x="564" y="630" class="t-sub">啟動時掛載</text>
+  <text x="564" y="648" class="t-sub">所有實例拿同一版</text>
+
+  <!-- SQL → export -->
+  <path d="M300 700 V718 H830 V770" class="e-d" marker-end="url(#ah)"/>
+  <text x="690" y="713" class="t-edge">每週匯出（異地）</text>
+
+  <!-- External services -->
+  <rect x="928" y="380" width="260" height="284" rx="10" class="g-box"/>
+  <text x="940" y="398" class="g-lbl">外部服務（程式對外呼叫）</text>
+  <rect x="944" y="410" width="228" height="50" rx="8" class="n"/>
+  <text x="956" y="431" class="t-title" style="font-size:13px">LINE Login</text>
+  <text x="956" y="449" class="t-sub">OAuth token 交換</text>
+  <rect x="944" y="470" width="228" height="50" rx="8" class="n"/>
+  <text x="956" y="491" class="t-title" style="font-size:13px">Strava API</text>
+  <text x="956" y="509" class="t-sub">token 刷新 · 每小時補抓</text>
+  <rect x="944" y="530" width="228" height="50" rx="8" class="n"/>
+  <text x="956" y="551" class="t-title" style="font-size:13px">Gmail SMTP</text>
+  <text x="956" y="569" class="t-sub">從佇列寄信</text>
+  <rect x="944" y="590" width="228" height="50" rx="8" class="n"/>
+  <text x="956" y="611" class="t-title" style="font-size:13px">藍新金流 · ezPay 發票</text>
+  <text x="956" y="629" class="t-sub">查詢交易 · 開立發票</text>
+
+  <!-- Ops band -->
+  <rect x="20" y="744" width="892" height="164" rx="10" class="g-box"/>
+  <text x="32" y="762" class="g-lbl">部署與營運</text>
+  <rect x="36" y="772" width="120" height="62" rx="8" class="n"/>
+  <text x="48" y="794" class="t-tag">外部</text>
+  <text x="48" y="813" class="t-title" style="font-size:13px">GitHub</text>
+  <text x="48" y="828" class="t-sub" style="font-size:10.5px">NID 自己的 org</text>
+  <rect x="182" y="772" width="120" height="62" rx="8" class="n"/>
+  <text x="194" y="794" class="t-tag">CI · 外部</text>
+  <text x="194" y="813" class="t-name" style="font-size:12px">GitHub Actions</text>
+  <text x="194" y="828" class="t-sub" style="font-size:10.5px">測試、只建一次映像</text>
+  <rect x="328" y="772" width="120" height="62" rx="8" class="n"/>
+  <text x="340" y="794" class="t-tag">映像</text>
+  <text x="340" y="813" class="t-name" style="font-size:12px">Artifact Registry</text>
+  <text x="340" y="828" class="t-sub" style="font-size:10.5px">同一個映像給兩環境</text>
+  <rect x="474" y="772" width="120" height="62" rx="8" class="n"/>
+  <text x="486" y="794" class="t-tag">CD · 外部</text>
+  <text x="486" y="813" class="t-name" style="font-size:12px">部署 workflow</text>
+  <text x="486" y="828" class="t-sub" style="font-size:10.5px">打 tag 才部署</text>
+  <rect x="620" y="772" width="120" height="62" rx="8" class="n"/>
+  <text x="632" y="794" class="t-tag">觀測</text>
+  <text x="632" y="813" class="t-name" style="font-size:12px">Cloud Monitoring</text>
+  <text x="632" y="828" class="t-sub" style="font-size:10.5px">告警 → 員工手機</text>
+  <rect x="766" y="772" width="130" height="62" rx="8" class="n-data"/>
+  <text x="778" y="794" class="t-tag">獨立備份專案</text>
+  <text x="778" y="813" class="t-title" style="font-size:12.5px">每週資料庫匯出</text>
+  <text x="778" y="828" class="t-sub" style="font-size:10.5px">異地 · 保留 90 天</text>
+  <path d="M156 803 H180" class="e" marker-end="url(#ah)"/>
+  <path d="M302 803 H326" class="e" marker-end="url(#ah)"/>
+  <path d="M448 803 H472" class="e" marker-end="url(#ah)"/>
+  <text x="169" y="852" text-anchor="middle" class="t-edge">push</text>
+  <text x="315" y="852" text-anchor="middle" class="t-edge">推映像</text>
+  <text x="461" y="852" text-anchor="middle" class="t-edge">打 tag</text>
+  <path d="M546 772 V540" class="e-d" marker-end="url(#ah)"/>
+  <text x="556" y="762" class="t-edge">↑ 先跑 migrate，新版本先接 10%，再 100%</text>
+  <text x="36" y="890" class="t-sub">打 YYYYMMDDstg 上 staging 驗證 → 核准人在同一個 commit 打 YYYYMMDDprod → 正式先接 10% 流量 → 沒問題再切 100%；出事由核准人觸發回滾</text>
+</svg>
+    </div>
+    <figcaption>虛線框是「需要時才加」的項目，平常不開、不收費：Cloud Armor 被攻擊時才掛上（每月約 +US$8）；Cloud NAT 藍新若要求固定 IP 才建；Memorystore（快取資料庫）資料庫吃緊時才加，壓力測試顯示先在程式加快取就夠。測試環境是同一張圖的縮小版，只差規格、網址和測試用的帳號。</figcaption>
+  </figure>
+</section>
+
+<section id="release" class="tech">
+  <div class="sec-head">
+    <h2>上線流程</h2>
+    <p>用 GitHub 管理版本，打 tag 決定要上到哪裡，在 GitHub 上就看得到每個環境目前是哪一版。</p>
+  </div>
+  <figure>
+    <div class="diagram">
+<svg viewBox="0 0 1200 270" role="img" aria-label="發佈流程：push 到 main 時 GitHub Actions 跑測試並只建一次映像；在 commit 上打 YYYYMMDDstg 的 tag 就部署到 staging，通過後在同一個 commit 打 YYYYMMDDprod 的 tag 部署到正式，只有核准人打的 prod tag 會生效；兩個環境都是先跑 migrate、新版本接 10% 流量、驗證、再切 100%，成功後移動 live-stg 或 live-prod 指標 tag；出事由核准人觸發回滾 workflow。">
+  <defs>
+    <marker id="ah3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah"/></marker>
+    <marker id="ah3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="ah-a"/></marker>
+  </defs>
+  <text x="16" y="24" class="g-lbl">CI：每次 push</text>
+  <text x="526" y="24" class="g-lbl">CD：打 tag 才部署</text>
+  <path d="M696 32 H1182" class="e-a" style="stroke-width:1.2"/>
+  <text x="939" y="26" text-anchor="middle" class="t-edge-a">同一個映像、同一組步驟</text>
+  <rect x="16" y="44" width="146" height="104" rx="8" class="n"/>
+  <text x="28" y="66" class="t-tag">開發者</text>
+  <text x="28" y="88" class="t-title" style="font-size:13px">push／合併 main</text>
+  <text x="28" y="108" class="t-sub">NID 自己的 org</text>
+  <rect x="186" y="44" width="146" height="104" rx="8" class="n"/>
+  <text x="198" y="66" class="t-tag">GitHub Actions</text>
+  <text x="198" y="88" class="t-title" style="font-size:13px">測試 ＋ 建映像</text>
+  <text x="198" y="108" class="t-sub">合併 main 時建一次</text>
+  <text x="198" y="125" class="t-sub">以 commit 標記</text>
+  <rect x="356" y="44" width="146" height="104" rx="8" class="n"/>
+  <text x="368" y="66" class="t-tag">GCP</text>
+  <text x="368" y="88" class="t-name" style="font-size:12px">Artifact Registry</text>
+  <text x="368" y="108" class="t-sub">部署時只找映像</text>
+  <text x="368" y="125" class="t-sub">不重建</text>
+  <rect x="526" y="44" width="146" height="104" rx="8" class="n"/>
+  <text x="538" y="66" class="t-tag">有寫入權的人</text>
+  <text x="538" y="88" class="t-name" style="font-size:12.5px">20260924stg</text>
+  <text x="538" y="108" class="t-sub">在 main 的 commit</text>
+  <text x="538" y="125" class="t-sub">上打 tag</text>
+  <rect x="696" y="44" width="146" height="104" rx="8" class="n-run"/>
+  <text x="708" y="66" class="t-tag">stg.nidrc.com</text>
+  <text x="708" y="88" class="t-title" style="font-size:13px">staging</text>
+  <text x="708" y="108" class="t-sub">migrate → 10% → 驗證</text>
+  <text x="708" y="125" class="t-sub">→ 100%</text>
+  <text x="708" y="141" class="t-sub" style="fill:var(--accent)">移動 live-stg</text>
+  <rect x="866" y="44" width="146" height="104" rx="8" class="n-risk"/>
+  <text x="878" y="66" class="t-tag">只有核准人</text>
+  <text x="878" y="88" class="t-name" style="font-size:12.5px">20260926prod</text>
+  <text x="878" y="108" class="t-sub">打在同一個 commit</text>
+  <text x="878" y="125" class="t-sub">開賣期間凍結</text>
+  <rect x="1036" y="44" width="146" height="104" rx="8" class="n-run"/>
+  <text x="1048" y="66" class="t-tag">nidstudio.online</text>
+  <text x="1048" y="88" class="t-title" style="font-size:13px">正式</text>
+  <text x="1048" y="108" class="t-sub">migrate → 10% → 觀察</text>
+  <text x="1048" y="125" class="t-sub">→ 100%</text>
+  <text x="1048" y="141" class="t-sub" style="fill:var(--accent)">移動 live-prod</text>
+  <path d="M162 96 H184" class="e" marker-end="url(#ah3)"/>
+  <path d="M332 96 H354" class="e" marker-end="url(#ah3)"/>
+  <path d="M502 96 H524" class="e-d" marker-end="url(#ah3)"/>
+  <path d="M672 96 H694" class="e-a" marker-end="url(#ah3a)"/>
+  <path d="M842 96 H864" class="e-a" marker-end="url(#ah3a)"/>
+  <path d="M1012 96 H1034" class="e-a" marker-end="url(#ah3a)"/>
+  <path d="M1150 148 V180 H1070 V154" class="e-d" marker-end="url(#ah3)"/>
+  <text x="1182" y="202" text-anchor="end" class="t-edge">出事：核准人觸發回滾 workflow，流量切回上一版，live-prod 移回</text>
+  <text x="16" y="230" class="t-sub">正式部署前自動檢查：這個 commit 是否在 main 上、是否已經在 staging 部署成功並通過測試。沒有就拒絕，不會跳過 staging。</text>
+  <text x="16" y="252" class="t-sub">GCP 只在「tag 符合 YYYYMMDDprod，而且是核准人打的」時才發出正式環境權限；別人打的 prod tag 會直接失敗，改 workflow 也繞不過去。</text>
+</svg>
+    </div>
+  </figure>
+  <ul class="tight" style="max-width:90ch">
+    <li><b>平常 push：</b>只跑自動測試，並準備好新版本，不會上線。</li>
+    <li><b>打 <code>20260924stg</code>：</b>上到測試環境。同一天第二版就加序號，例如 <code>20260924stg2</code>。</li>
+    <li><b>在同一版打 <code>20260926prod</code>：</b>上到正式網站。只有指定的負責人打的才會生效，而且必須先在測試環境通過。</li>
+    <li><b>看目前版本：</b><code>live-stg</code>、<code>live-prod</code> 兩個 tag 永遠指著各環境現在的版本。</li>
+  </ul>
+</section>
+</details>
+
+<footer class="foot">
+  <div>依據：GCP 實際設定與近 6 週的用量紀錄、交接盤點文件，以及 Google 官方文件與定價。費用為估算，不是帳單。</div>
+</footer>
+
+</div>
+
+</body>
+</html>
