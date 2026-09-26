@@ -223,7 +223,7 @@ ul.list li .why{grid-column:2}
 <body>
 <div class="wrap">
 <header>
-  <div class="eyebrow">NID 新架構測試環境 · 2026-09-26 14:40</div>
+  <div class="eyebrow">NID 新架構測試環境 · 2026-09-26 15:32</div>
   <h1>NID 新架構測試報告</h1>
   <p class="lede">在新架構的測試環境裡，用真的瀏覽器模擬會員和員工，<b>實際註冊、登入、報名、操作後台</b>，確認每個功能都正常。用的是遮掉個資的正式資料副本，<b>完全沒有動到正式網站</b>。</p>
 </header>
@@ -238,20 +238,7 @@ ul.list li .why{grid-column:2}
   </div>
 </section>
 
-<section id="review">
-  <div class="sec-head"><h2>怎麼確認沒有漏測</h2><p>請審查員對照三個網站的程式，列出使用者能做的每一個操作，逐項檢查有沒有測到；有漏就補，補完再審，一共審了 5 輪。</p></div>
-  <div class="tbl-wrap"><table>
-    <thead><tr><th>審查</th><th>找到的遺漏</th></tr></thead>
-    <tbody>
-      <tr><td>第 1 輪</td><td>286 項（大多是「只打開頁面、沒有真的按下去」）</td></tr>
-      <tr><td>第 2 輪</td><td>87 項</td></tr>
-      <tr><td>第 3 輪</td><td>17 項</td></tr>
-      <tr><td>第 4 輪</td><td>5 項</td></tr>
-      <tr><td>第 5 輪</td><td>3 項，審查員確認之後不需要再補</td></tr>
-    </tbody>
-  </table></div>
-  <p class="why" style="margin-top:8px">所有遺漏都已補測。</p>
-</section>
+
 
 <section id="gifs"><div class="sec-head"><h2>實際操作畫面</h2><p>測試程式真的在網頁上操作的錄影（密碼、驗證碼顯示成圓點）。</p></div><div class="gifs"><figure><img src="gifs/01-register.gif" alt="會員註冊：輸入新信箱 → 收驗證碼 → 設定密碼 → 註冊完成" loading="lazy" decoding="async"><figcaption>會員註冊：輸入新信箱 → 收驗證碼 → 設定密碼 → 註冊完成</figcaption></figure><figure><img src="gifs/02-login.gif" alt="會員登入：未登入被帶到登入頁 → 登入 → 回到會員中心 → 登出" loading="lazy" decoding="async"><figcaption>會員登入：未登入被帶到登入頁 → 登入 → 回到會員中心 → 登出</figcaption></figure><figure><img src="gifs/03-forgot.gif" alt="忘記密碼：寄驗證碼 → 驗證 → 重設密碼 → 用新密碼登入" loading="lazy" decoding="async"><figcaption>忘記密碼：寄驗證碼 → 驗證 → 重設密碼 → 用新密碼登入</figcaption></figure><figure><img src="gifs/04-browse.gif" alt="瀏覽課程：課程介紹 → 依時間 → 班級列表" loading="lazy" decoding="async"><figcaption>瀏覽課程：課程介紹 → 依時間 → 班級列表</figcaption></figure><figure><img src="gifs/05-mobile.gif" alt="手機版：漢堡選單的每個連結" loading="lazy" decoding="async"><figcaption>手機版：漢堡選單的每個連結</figcaption></figure><figure><img src="gifs/06-purchase.gif" alt="報名：填表送出 → 前往藍新（測試）→ 重新付款 → 取消付款" loading="lazy" decoding="async"><figcaption>報名：填表送出 → 前往藍新（測試）→ 重新付款 → 取消付款</figcaption></figure><figure><img src="gifs/07-leave.gif" alt="會員中心：請假與取消請假" loading="lazy" decoding="async"><figcaption>會員中心：請假與取消請假</figcaption></figure><figure><img src="gifs/08-makeup.gif" alt="會員中心：請假 → 申請補課 → 還原" loading="lazy" decoding="async"><figcaption>會員中心：請假 → 申請補課 → 還原</figcaption></figure><figure><img src="gifs/09-paid.gif" alt="付款成功：藍新通知 → 結果頁「報名已完成」→ 查看課程紀錄" loading="lazy" decoding="async"><figcaption>付款成功：藍新通知 → 結果頁「報名已完成」→ 查看課程紀錄</figcaption></figure><figure><img src="gifs/10-zero.gif" alt="0 元訂單：優惠折到 0 元，直接成立" loading="lazy" decoding="async"><figcaption>0 元訂單：優惠折到 0 元，直接成立</figcaption></figure><figure><img src="gifs/11-backend-login.gif" alt="後台：員工登入 → 工作區 → 登出" loading="lazy" decoding="async"><figcaption>後台：員工登入 → 工作區 → 登出</figcaption></figure><figure><img src="gifs/12-news.gif" alt="後台發布最新消息 → 前台看得到 → 刪除" loading="lazy" decoding="async"><figcaption>後台發布最新消息 → 前台看得到 → 刪除</figcaption></figure><figure><img src="gifs/13-banner.gif" alt="後台上架輪播圖 → 前台首頁輪播" loading="lazy" decoding="async"><figcaption>後台上架輪播圖 → 前台首頁輪播</figcaption></figure></div></section>
 
@@ -277,18 +264,10 @@ ul.list li .why{grid-column:2}
   </table></div>
 </section>
 
-<section id="fixed">
-  <div class="sec-head"><h2>搬家才會出現、已經修好的問題</h2></div>
-  <div class="panel"><ul class="tight">
-    <li><b>報名成功信可能漏寄</b> → 改成排隊寄送，寄失敗會自動重寄。</li>
-    <li><b>後台操作被擋下時看不到原因</b> → 已修好，原因會正常顯示。</li>
-    <li><b>後台下載範本的中文檔名壞掉</b> → 已修好。</li>
-    <li><b>「關於我們」的照片放在前廠商的主機</b> → 已搬到 NID 自己的網站。</li>
-  </ul></div>
-</section>
+
 
 <section id="known">
-  <div class="sec-head"><h2>正式網站本來就有的問題</h2><p>這些不是搬家造成的，正式網站現在也一樣。這次依決定先不改程式，每一項都寫成了測試，修好時會自動知道。</p></div>
+  <div class="sec-head"><h2>正式網站本來就有的問題</h2><p>這些不是搬家造成的，正式網站現在也一樣，這次先不改程式。</p></div>
   <div class="two">
     <div class="panel gate"><h3>上線前建議先修</h3><ul class="tight">
       <li>全站每分鐘只能登入 10 次，開賣人多時會被擋。</li>
